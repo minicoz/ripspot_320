@@ -6,10 +6,9 @@ import subprocess
 import shutil
 
 
-from librespot.audio.decoders import AudioQuality
+from librespot.audio.decoders import AudioQuality, VorbisOnlyAudioQuality
 from librespot.core import Session
 from librespot.metadata import TrackId
-from librespot.player.codecs import VorbisOnlyAudioQuality
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -32,14 +31,14 @@ parser = argparse.ArgumentParser(
     prog="ripspot",
 )
 parser.add_argument("url", type=str, nargs="+", help="URL to a song/album/playlist")
-parser.add_argument("-u", "--username", help="Your spotify username", required=True)
-parser.add_argument("-p", "--password", help="Your spotify password", required=True)
+parser.add_argument("-u", "--username", help="Your spotify username", default="CHANGE_THIS") 
+parser.add_argument("-p", "--password", help="Your spotify password", default="CHANGE_THIS")
 parser.add_argument(
     "-q",
     "--quality",
     help="Select your prefered quality",
     choices={"normal", "high", "veryhigh"},
-    default="normal",
+    default="veryhigh",
 )
 
 arguments = parser.parse_args()
@@ -123,4 +122,3 @@ for request in arguments.url:
 for track in tracks:
     _download_song(session, track, arguments.quality)
 
-shutil.rmtree(temp_folder)

@@ -1,6 +1,7 @@
 import sys
 import argparse
 import os
+from os.path import exists
 import pathlib
 import subprocess
 import asyncio
@@ -10,10 +11,9 @@ from asyncio.subprocess import create_subprocess_exec
 
 from typing import List
 
-from librespot.audio.decoders import AudioQuality
+from librespot.audio.decoders import AudioQuality, VorbisOnlyAudioQuality
 from librespot.core import Session
 from librespot.metadata import TrackId
-from librespot.player.codecs import VorbisOnlyAudioQuality
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -38,6 +38,7 @@ def _get_song_bytes(session, id, quality):
 
     track_id = TrackId.from_base62(id)
 
+    print("Beginning stream load")
     stream = session.content_feeder().load(
         track_id,
         VorbisOnlyAudioQuality(AUDIO_QUALITY[quality]),
@@ -49,11 +50,9 @@ def _get_song_bytes(session, id, quality):
 
     while True:
         byte = stream.input_stream.stream().read()
-        if byte == -1:
+        if byte == -1 or not byte:
             break
-
         data.append(byte)
-
     return data
 
 
@@ -98,41 +97,46 @@ async def _convert_to_mp3(input_path, output_path, response):
         "ffmpeg",
         "-v",
         "quiet",
-        "-y",
+        "-n",
         "-i",
         input_path.absolute(),
         "-acodec",
         "libmp3lame",
-        "-abr",
-        "true",
+        "-b:a",
+        "320k",
         output_path.absolute(),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-
+    
     proc_out, proc_err = await process.communicate()
     output = "\n".join([proc_out.decode("utf-8"), proc_err.decode("utf-8")])
     if process.returncode != 0:
-        print("=== FFMPEG ERROR ===")
-        print(output, file=sys.stderr)
+       print("=== FFMPEG ERROR ===")
+       print(output, file=sys.stderr)
     else:
-        print(f"Tagging {_create_display_name(response['name'], response['artists'])}")
-        _set_id3_data(output_path, response)
+       print(f"Tagging {_create_display_name(response['name'], response['artists'])}")
+    _set_id3_data(output_path, response)
 
 
 def _download_song(session, response, quality):
     display_name = _create_display_name(response["name"], response["artists"])
-
-    print(f"Downloading {display_name}")
-    song_bytes = _get_song_bytes(session, response["id"], quality)
-
+    
     safe_name = "".join(i for i in display_name if i not in "/?\\*|<>")
-
     temp_file_path = pathlib.Path(".", "riptemp", f"{safe_name}.ogg")
-    converted_file_path = pathlib.Path(".", f"{safe_name}.mp3")
+    converted_file_path = pathlib.Path(".", "output", f"{safe_name}.mp3")
+    skip_download = False
+    if exists(temp_file_path):
+        print(f"file {temp_file_path} exists")
+        skip_download = True
+    if not skip_download:
+        print(f"Downloading {display_name}")
+        song_bytes = _get_song_bytes(session, response["id"], quality)
+        song_bytes = b''.join(song_bytes)
 
-    with open(temp_file_path, "wb") as temp_file:
-        temp_file.write(bytes(song_bytes))
+
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(bytes(song_bytes))
 
     print(f"Converting {display_name}")
     asyncio.run(_convert_to_mp3(temp_file_path, converted_file_path, response))

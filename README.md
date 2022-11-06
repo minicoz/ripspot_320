@@ -1,8 +1,13 @@
 # ripspot
 Spotify ripper
 
-## This repository is only for educational purpose
-It probably no longer works, but I don't care.
+## NEW Update and reason why I forked it.
+This works now. I got it to work on Nov 2022. Instructions are basically the same. 
+I changed it so that the temp folder is not removed (downloaded as .oggs) and now ffmpeg converts the ogg files into `320kbps CBR` `mp3` files.
+Output folder is output.
+
+You might need to create the folder in this root level im lazy to set it up. 
+
 
 # Prerequisites
 
