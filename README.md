@@ -6,6 +6,7 @@ This works now. I got it to work on Nov 2022. Instructions are basically the sam
 I changed it so that the temp folder is not removed (downloaded as .oggs) and now ffmpeg converts the ogg files into `320kbps CBR` `mp3` files.
 Output folder is output.
 
+Also I hate having to type my password and username each time so I recommend you go and edit the `Defaults` on those arg parse fields to your `username` and your `password`.
 
 # Prerequisites
 
