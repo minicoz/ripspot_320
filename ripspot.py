@@ -57,9 +57,13 @@ session = (
 )
 
 temp_folder = pathlib.Path(".", "riptemp")
+converted_folder = pathlib.Path(".", "output")
 
 if not temp_folder.exists():
     temp_folder.mkdir()
+
+if not converted_folder.exists():
+    converted_folder.mkdir()
 
 tracks = []
 for request in arguments.url:
