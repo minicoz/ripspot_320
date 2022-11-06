@@ -3,6 +3,7 @@
 credentials.json
 *.mp3
 riptemp/
+output/
 .cache
 
 # vscode
@@ -122,7 +123,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# project
-riptemp/*
-output/*
