@@ -42,3 +42,14 @@ to download artist
 
 to download song album and playlist
 - `python ripspot.py --username "username" --password "password" https://open.spotify.com/track/62VJE7RsgsmjjmI2eHH4lx https://open.spotify.com/playlist/5tFLvXM5ieVn8wzCaLTuzt https://open.spotify.com/album/2SYoVgjmUEYmzwP42lROTx`
+
+
+# Removing duplicates
+when downloading using artist you might end up downloading a lot of compilations where the artist may have one song on it but there are another 50 artists in the compilation / playlist
+
+To solve this I used the following bash command:
+
+`find . -type f ! -name "*Daft Punk*" -delete`
+
+The `!` character evaluates to filter out all the files that have `Daft Punk` in them to only remove the extra artsts ones. 
+I have added a check to split the artists name into tokens and if non of the tokens are present anywhere in the song name title then it will skip it. This may cause issues for DJ mixes but hey, im trying to download discographies, not other peoples work.

@@ -59,6 +59,14 @@ def make_album_folder(artist, album):
         converted_folder.mkdir()
 
 
+def is_song_from_artist(song_name, artist_name):
+    # Only download songs that are from the artist
+    artist_tokens = artist_name.lower().split()
+    for token in artist_tokens:
+        if token in song_name.lower():
+            return True
+    return False
+
 def _create_display_name(song_name, song_artists):
     artists_names = [artist["name"] for artist in song_artists if "name" in artist]
     artist_string = ", ".join(artists_names)
@@ -152,6 +160,8 @@ async def _convert_to_mp3(input_path, output_path, response):
 def _download_song(session, response, quality, artist_name=None, album_name=None):
     try:
         display_name = _create_display_name(response["name"], response["artists"])
+
+        if not is_song_from_artist(display_name, artist_name): return
         
         safe_name = "".join(i for i in display_name if i not in "/?\\*|<>")
 
