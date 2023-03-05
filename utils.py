@@ -27,6 +27,37 @@ AUDIO_QUALITY = {
     "veryhigh": AudioQuality.VERY_HIGH,
 }
 
+def make_folders(path=None):
+    riptemp = f'riptemp/"{path}"' if path else "riptemp"
+    output = f'output/"{path}"' if path else "output"
+
+    temp_folder = pathlib.Path(".", riptemp)
+    converted_folder = pathlib.Path(".", output)
+    if not temp_folder.exists():
+        temp_folder.mkdir()
+
+    if not converted_folder.exists():
+        converted_folder.mkdir()
+
+def make_artist_folders(artist):
+    temp_folder = pathlib.Path(f"./riptemp/", artist)
+    converted_folder = pathlib.Path(f"./output", artist)
+    if not temp_folder.exists():
+        temp_folder.mkdir()
+
+    if not converted_folder.exists():
+        converted_folder.mkdir()
+
+
+def make_album_folder(artist, album):
+    temp_folder = pathlib.Path(f"./riptemp/{artist}", album)
+    converted_folder = pathlib.Path(f"./output/{artist}", album)
+    if not temp_folder.exists():
+        temp_folder.mkdir()
+
+    if not converted_folder.exists():
+        converted_folder.mkdir()
+
 
 def _create_display_name(song_name, song_artists):
     artists_names = [artist["name"] for artist in song_artists if "name" in artist]
@@ -38,7 +69,6 @@ def _get_song_bytes(session, id, quality):
 
     track_id = TrackId.from_base62(id)
 
-    print("Beginning stream load")
     stream = session.content_feeder().load(
         track_id,
         VorbisOnlyAudioQuality(AUDIO_QUALITY[quality]),
@@ -119,16 +149,22 @@ async def _convert_to_mp3(input_path, output_path, response):
     _set_id3_data(output_path, response)
 
 
-def _download_song(session, response, quality):
+def _download_song(session, response, quality, artist_name=None, album_name=None):
     display_name = _create_display_name(response["name"], response["artists"])
     
     safe_name = "".join(i for i in display_name if i not in "/?\\*|<>")
-    temp_file_path = pathlib.Path(".", "riptemp", f"{safe_name}.ogg")
-    converted_file_path = pathlib.Path(".", "output", f"{safe_name}.mp3")
+
+    if album_name: make_album_folder(artist_name, album_name)
+
+    temp_file_path = pathlib.Path(".", "riptemp", artist_name, album_name, f"{safe_name}.ogg")
+    converted_file_path = pathlib.Path(".", "output", artist_name, album_name, f"{safe_name}.mp3")
     skip_download = False
     if exists(temp_file_path):
         print(f"file {temp_file_path} exists")
         skip_download = True
+    if exists(converted_file_path):
+        print(f"skipping {converted_file_path} exists")
+        return
     if not skip_download:
         print(f"Downloading {display_name}")
         song_bytes = _get_song_bytes(session, response["id"], quality)
@@ -138,5 +174,4 @@ def _download_song(session, response, quality):
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(bytes(song_bytes))
 
-    print(f"Converting {display_name}")
     asyncio.run(_convert_to_mp3(temp_file_path, converted_file_path, response))
