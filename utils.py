@@ -150,28 +150,29 @@ async def _convert_to_mp3(input_path, output_path, response):
 
 
 def _download_song(session, response, quality, artist_name=None, album_name=None):
-    display_name = _create_display_name(response["name"], response["artists"])
-    
-    safe_name = "".join(i for i in display_name if i not in "/?\\*|<>")
+    try:
+        display_name = _create_display_name(response["name"], response["artists"])
+        
+        safe_name = "".join(i for i in display_name if i not in "/?\\*|<>")
 
-    if album_name: make_album_folder(artist_name, album_name)
+        if album_name: make_album_folder(artist_name, album_name)
 
-    temp_file_path = pathlib.Path(".", "riptemp", artist_name, album_name, f"{safe_name}.ogg")
-    converted_file_path = pathlib.Path(".", "output", artist_name, album_name, f"{safe_name}.mp3")
-    skip_download = False
-    if exists(temp_file_path):
-        print(f"file {temp_file_path} exists")
-        skip_download = True
-    if exists(converted_file_path):
-        print(f"skipping {converted_file_path} exists")
-        return
-    if not skip_download:
-        print(f"Downloading {display_name}")
-        song_bytes = _get_song_bytes(session, response["id"], quality)
-        song_bytes = b''.join(song_bytes)
+        temp_file_path = pathlib.Path(".", "riptemp", artist_name, album_name, f"{safe_name}.ogg")
+        converted_file_path = pathlib.Path(".", "output", artist_name, album_name, f"{safe_name}.mp3")
+        skip_download = False
+        if exists(temp_file_path):
+            skip_download = True
+        if exists(converted_file_path):
+            return
+        if not skip_download:
+            print(f"Downloading {display_name}")
+            song_bytes = _get_song_bytes(session, response["id"], quality)
+            song_bytes = b''.join(song_bytes)
 
 
-        with open(temp_file_path, "wb") as temp_file:
-            temp_file.write(bytes(song_bytes))
+            with open(temp_file_path, "wb") as temp_file:
+                temp_file.write(bytes(song_bytes))
 
-    asyncio.run(_convert_to_mp3(temp_file_path, converted_file_path, response))
+        asyncio.run(_convert_to_mp3(temp_file_path, converted_file_path, response))
+    except Exception as e:
+        print(e)
